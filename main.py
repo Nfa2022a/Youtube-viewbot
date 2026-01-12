@@ -7,14 +7,20 @@ from colorama import Fore
 class Viewbot:
     def __init__(self):
         self.config = json.load(open('./data/config.json', 'r+'))
-        self.proxies = itertools.cycle(open('./data/proxies.txt').read().splitlines())
+        
+        # Check proxies file
+        proxies_file = './data/proxies.txt'
+        if not os.path.exists(proxies_file) or os.path.getsize(proxies_file) == 0:
+            raise ValueError(f"{proxies_file} is missing or empty. Run proxy generator first.")
+        
+        self.proxies = itertools.cycle(open(proxies_file).read().splitlines())
         self.ua = UserAgent()
 
     def ui(self):
         os.system('cls && title Youtube Viewbot ^| github.com/Plasmonix' if os.name == "nt" else 'clear') 
         print(f"""{Fore.RED}                                                           
          __ __         _       _          _____ _           _       _     
-        |  |  |___ _ _| |_ _ _| |_ ___   |  |  |_|___ _ _ _| |_ ___| |_   
+        |  |  |___ _ _| |_ _ _| |_ ___   |  |  | |___ _ _ _| |_ ___| |_   
         |_   _| . | | |  _| | | . | -_|  |  |  | | -_| | | | . | . |  _|  
           |_| |___|___|_| |___|___|___|   \___/|_|___|_____|___|___|_|    
         {Fore.RESET}""")
@@ -35,9 +41,17 @@ class Viewbot:
 
     def main(self):
         self.ui()
-        for _ in range(self.config["views"]):
+        proxy_iter = iter(self.proxies)
+        for i in range(self.config["views"]):
+            try:
+                proxy = next(proxy_iter)
+                print(f"View {i+1}/{self.config['views']} using proxy {proxy}")
+            except StopIteration:
+                print("No more proxies available. Stopping.")
+                break
+            
             self.sleeptime = random.randint(self.config["min_watch"], self.config["max_watch"])
-            self.open_url(self.ua, self.sleeptime, next(self.proxies))
+            self.open_url(self.ua, self.sleeptime, proxy)
 
 if __name__ == "__main__":
     bot = Viewbot()
